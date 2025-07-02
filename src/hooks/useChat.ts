@@ -10,7 +10,7 @@ export function useChat() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hello! I\'m your AI assistant in Dyad. I can help you build applications, write code, debug issues, and modify your project files directly. What would you like to create or change today?',
+      content: 'Hello! I\'m your AI assistant in Viber.AI. I can help you build applications, write code, debug issues, and modify your project files directly. What would you like to create or change today?',
       timestamp: new Date()
     }
   ]);

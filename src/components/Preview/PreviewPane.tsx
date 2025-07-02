@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Monitor, Smartphone, Tablet, RotateCcw, ExternalLink } from 'lucide-react';
 import { Project } from '../../types';
 
@@ -11,6 +11,13 @@ type ViewportSize = 'desktop' | 'tablet' | 'mobile';
 export function PreviewPane({ project }: PreviewPaneProps) {
   const [viewportSize, setViewportSize] = useState<ViewportSize>('desktop');
   const [key, setKey] = useState(0);
+
+  // Auto-refresh when project files change
+  useEffect(() => {
+    if (project) {
+      setKey(prev => prev + 1);
+    }
+  }, [project?.lastModified]);
 
   const previewContent = useMemo(() => {
     if (!project) return null;
@@ -39,14 +46,19 @@ export function PreviewPane({ project }: PreviewPaneProps) {
       margin: 0; 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; 
       background: #f8fafc;
+      font-weight: 300;
     }
     .error-boundary {
       padding: 2rem;
       background: #fee2e2;
       border: 1px solid #fecaca;
-      border-radius: 0.5rem;
+      border-radius: 0.75rem;
       margin: 1rem;
       color: #991b1b;
+      font-family: monospace;
+    }
+    * {
+      box-sizing: border-box;
     }
   </style>
 </head>
@@ -77,6 +89,9 @@ export function PreviewPane({ project }: PreviewPaneProps) {
               <h2>Preview Error</h2>
               <p>There was an error rendering your component:</p>
               <pre>{this.state.error?.toString()}</pre>
+              <p style={{marginTop: '1rem', fontSize: '0.875rem', opacity: 0.8}}>
+                Check the console for more details or try refreshing the preview.
+              </p>
             </div>
           );
         }
@@ -86,20 +101,29 @@ export function PreviewPane({ project }: PreviewPaneProps) {
     }
     
     try {
-      ${appFile.content.replace('export default App;', '')}
+      // Clean the component code
+      const componentCode = \`${appFile.content.replace(/export default App;?/g, '').trim()}\`;
       
-      ReactDOM.render(
-        <ErrorBoundary>
-          <App />
-        </ErrorBoundary>, 
-        document.getElementById('root')
+      // Execute the component code
+      eval(componentCode);
+      
+      // Render the app
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(
+        React.createElement(ErrorBoundary, null,
+          React.createElement(App, null)
+        )
       );
     } catch (error) {
+      console.error('Compilation error:', error);
       document.getElementById('root').innerHTML = \`
         <div class="error-boundary">
           <h2>Compilation Error</h2>
           <p>There was an error compiling your component:</p>
           <pre>\${error.toString()}</pre>
+          <p style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.8;">
+            Make sure your component syntax is correct and try again.
+          </p>
         </div>
       \`;
     }
